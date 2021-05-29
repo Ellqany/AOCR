@@ -39,10 +39,14 @@ class Encoder:
     ]
 
     def __init__(self, units: int):
+        '''
+            The feature extraction model
+                units: the number of units to be existed in lstm layer mus be even
+        '''
+
         assert units % 2 == 0  # units must be even, because the encoder is bidirectional
         self.cnn = Sequential(self.layers)
         self.lstm = Bidirectional(LSTM(units // 2, return_sequences=True))
-        self.cnn_shape = None
 
     def __call__(self, encoder_input: list) -> tf.Tensor:
         out = self.cnn(encoder_input)
@@ -61,6 +65,9 @@ class Encoder:
 
     @staticmethod
     def get_width(width):
+        '''
+            get the width of the netowrk
+        '''
         for layer in Encoder.layers:
             if type(layer) is MaxPool2D:
                 assert layer.strides == layer.pool_size
@@ -72,7 +79,11 @@ class Encoder:
 
 
 class Attention:
+
     def __init__(self, units: int):
+        '''
+            the Attention layer
+        '''
         self.query_projection = Dense(units)
 
     def __call__(self, decoder_input, encoder_output) -> Tuple[tf.Tensor, tf.Tensor]:
@@ -86,7 +97,11 @@ class Attention:
 
 
 class Decoder:
+
     def __init__(self, units):
+        '''
+            the Decoder layer
+        '''
         self.lstm = LSTM(units, return_sequences=True, return_state=True)
 
     def __call__(self, decoder_input, initial_state) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:

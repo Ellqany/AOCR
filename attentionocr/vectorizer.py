@@ -1,7 +1,6 @@
-from typing import Tuple
-
 import numpy as np
 
+from typing import Tuple
 from .image import ImageUtil
 from .layers import Encoder
 from .vocabulary import Vocabulary
@@ -10,6 +9,14 @@ from .vocabulary import Vocabulary
 class Vectorizer:
 
     def __init__(self, vocabulary: Vocabulary, image_height=32, image_width=320, max_txt_length: int = 42, transform: str = "lowercase"):
+        '''
+            A wrapper class for converting data into tensor
+                vocabulary: help inperforming one hot encoder
+                image_height: the maximum image height
+                image_width: the maximum image width
+                max_txt_length: the max text to predict
+                transform: convert the text to lowercase or uppercase
+        '''
         self._vocabulary = vocabulary
         self._max_txt_length = max_txt_length
         self._image_height = image_height
@@ -19,10 +26,15 @@ class Vectorizer:
         self._transform = transform
 
     def load_image(self, image) -> np.ndarray:
+        '''
+            load the image and perform preprocess techniques on it
+        '''
         return self._image_util.load(image)
 
     def transform_text(self, target_text: str, is_training: bool = True) -> Tuple[np.ndarray, np.ndarray]:
-
+        '''
+            perform one hot encoding on the text before passing the text to the network
+        '''
         decoder_input_size = self._max_txt_length if is_training else 1
         decoder_input = np.zeros(
             (decoder_input_size, len(self._vocabulary)), dtype='float32')
@@ -34,6 +46,8 @@ class Vectorizer:
         # transform the text
         if self._transform == "lowercase":
             target_text = target_text.lower()
+        elif self._transform == "uppercase":
+            target_text = target_text.upper()
 
         # decoder input
         if is_training:

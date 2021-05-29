@@ -1,10 +1,18 @@
+import numpy as np
 import tensorflow as tf
 
 
 def masked_accuracy(y_true: tf.Tensor, y_pred: tf.Tensor) -> float:
+    '''
+        calculate the accuracy
+            y_true: is all the text
+            y_pred: is the model prediction
+    '''
+
     y_true_indices = tf.argmax(y_true, axis=-1)
     y_pred_indices = tf.argmax(y_pred, axis=-1)
-    padding = tf.equal(y_pred_indices, 0)  # TODO 0 is the magic value for PAD
+    # TODO 0 is the magic value for PAD
+    padding = tf.equal(y_pred_indices, 0)
     mask = 1.0 - tf.cast(padding, dtype=tf.float32)
     correct = tf.cast(tf.equal(y_true_indices, y_pred_indices),
                       dtype=tf.float32) * mask
@@ -12,6 +20,12 @@ def masked_accuracy(y_true: tf.Tensor, y_pred: tf.Tensor) -> float:
 
 
 def fan_loss(y_true, y_pred, attention_weights, attention_target, ratio: float = 0.01) -> tf.Tensor:
+    '''
+        calculate the loss
+            y_true: is the true text
+            y_pred: is the model prediction
+            attention_weights: the current weight of the attention model
+    '''
     loss = masked_loss(y_true, y_pred)
 
     indices = tf.argmax(y_true, axis=2)
@@ -27,7 +41,12 @@ def fan_loss(y_true, y_pred, attention_weights, attention_target, ratio: float =
     return (1.0 - ratio) * loss + ratio * attn_loss
 
 
-def masked_loss(y_true, y_pred) -> tf.Tensor:
+def masked_loss(y_true: np.ndarray, y_pred: np.ndarray) -> tf.Tensor:
+    '''
+        calculate the masked loss
+            y_true: is the true text
+            y_pred: is the model prediction
+    '''
     indices = tf.argmax(y_true, axis=2)
     mask = tf.equal(indices, 0)
     mask = (1 - tf.cast(mask, dtype=tf.float32))

@@ -6,12 +6,23 @@ import tensorflow as tf
 from tqdm import tqdm
 from PIL import Image
 from tensorflow.keras import Input
-from attentionocr import metrics, Vocabulary, Encoder, Attention, Decoder, DecoderOutput
+from tensorflow.python.data.ops.dataset_ops import FlatMapDataset
+from . import metrics, Vocabulary, Encoder, Attention, Decoder, DecoderOutput
 
 
 class AttentionOCR:
 
     def __init__(self, vocabulary: Vocabulary, image_height=32, image_width=320, max_txt_length: int = 42, lr=0, units: int = 256):
+        '''
+            A class warapper for train test AttentionOCR model
+                vocabulary: help inperforming one hot encoder
+                image_height: the maximum image height
+                image_width: the maximum image width
+                max_txt_length: the max text to predict
+                lr: the init learining rate
+                units: number of unite to be include in the lstm layers must be even
+        '''
+
         self._vocabulary = vocabulary
         self._max_txt_length = max_txt_length
         self._image_height = image_height
@@ -19,7 +30,7 @@ class AttentionOCR:
         self._units = units
 
         if(lr > 0):
-            self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
+            self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         else:
             self.optimizer = tf.keras.optimizers.Adam()
 
@@ -45,6 +56,10 @@ class AttentionOCR:
             include_attention=True)
 
     def build_training_model(self) -> tf.keras.Model:
+        '''
+            build model for training
+        '''
+
         encoder_output = self._encoder(self._encoder_input)
 
         batch_size = tf.shape(self._decoder_input)[0]
@@ -59,6 +74,11 @@ class AttentionOCR:
         return tf.keras.Model([self._encoder_input, self._decoder_input], [logits])
 
     def build_inference_model(self, include_attention: bool = False) -> tf.keras.Model:
+        '''
+            build model for testing and validation to prevent model from cheeting
+                include_attention: flag to determine if you want to include attention layer or not
+        '''
+
         predictions = []
         attentions = []
         prediction = self._decoder_input
@@ -84,7 +104,16 @@ class AttentionOCR:
         output = [predictions, attentions] if include_attention else predictions
         return tf.keras.Model([self._encoder_input, self._decoder_input], output)
 
-    def fit_generator(self, generator, validate_every_steps: int, epochs: int = 1, batch_size: int = 64, validation_data=None) -> None:
+    def fit_generator(self, generator: FlatMapDataset, validate_every_steps: int, epochs: int = 1,
+                      batch_size: int = 64, validation_data: FlatMapDataset = None) -> None:
+        '''
+            start training the model
+                generator: the training dataset
+                validate_every_steps: number of step before validate model
+                epochs: number of epochs to train the model on
+                batch_size: the number of images to train the model on
+                validation_data: the validation dataset
+        '''
         for epoch in range(1, epochs + 1):
             batches = generator.batch(batch_size)
             pbar = tqdm(batches)
@@ -106,6 +135,12 @@ class AttentionOCR:
             self.save('snapshots/snapshot-%d.h5' % epoch)
 
     def _training_step(self, x_image: np.ndarray, x_decoder: np.ndarray, y_true: np.ndarray) -> float:
+        '''
+            Calculate model loss while training
+                x_image: image in numpay formate
+                x_decoder: the prediction of the model in numpay formate
+                y_true: is the true text
+        '''
         if x_decoder.shape[1] == 1:
             raise ValueError(
                 "Please provide training data during training (set is_training=True)")
@@ -119,6 +154,13 @@ class AttentionOCR:
         return loss.numpy()
 
     def _validation_step(self, x_image: np.ndarray, x_decoder: np.ndarray, y_true: np.ndarray) -> float:
+        '''
+            validate the model while training
+                x_image: image in numpay formate
+                x_decoder: the prediction of the model in numpay formate
+                y_true: is the true text
+        '''
+
         if x_decoder.shape[1] != 1:
             raise ValueError(
                 "Please provide validation data (set is_training=False)")
@@ -130,24 +172,46 @@ class AttentionOCR:
         return accuracy
 
     @staticmethod
-    def _calculate_loss(y_true, y_pred) -> tf.Tensor:
+    def _calculate_loss(y_true: np.ndarray, y_pred: np.ndarray) -> tf.Tensor:
+        '''
+            calculate model loss
+                y_true: is the true text
+                y_pred: is the model prediction
+        '''
         loss = metrics.masked_loss(y_true, y_pred)
         return loss
 
     def _update_tensorboard(self, **kwargs):
+        '''
+            update tensorboard model
+        '''
         with self.tensorboard_writer.as_default():
             for name in kwargs:
                 tf.summary.scalar(
                     name, kwargs[name], step=self.optimizer.iterations)
 
-    def save(self, filepath) -> None:
+    def save(self, filepath: str) -> None:
+        '''
+            save model while trainning and at the end of trainning
+                filepath: the path to store model in
+        '''
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self._training_model.save_weights(filepath=filepath)
 
-    def load(self, filepath) -> None:
+    def load(self, filepath: str) -> None:
+        '''
+            load pretrainned model weight
+                filepath: the path of the pretrained model
+        '''
         self._training_model.load_weights(filepath=filepath)
 
-    def predict(self, images):
+    def predict(self, images: list):
+        '''
+            Single image or multible images prediction
+                images: list of images in numpay formate
+                return the prediction texts and corresponding propapilities
+        '''
+
         texts = []
         propapilities = []
         for image in images:
@@ -168,7 +232,13 @@ class AttentionOCR:
             y_pred, self._max_txt_length))
         return (texts, propapilities)
 
-    def visualise(self, images, corecttext: str):
+    def visualise(self, images: list, corecttext: str):
+        '''
+            Revert the image back to its original before feeding to the network and sotre it in gif formate to visulaize what the model learned
+            it store the image in Correct folder if the prediction equal to correxttext otherwise it stored in Wrong
+                images: list of image in numpay formate
+                corecttext: the correct result
+        '''
         for image in images:
             input_image = np.expand_dims(image, axis=0)
 

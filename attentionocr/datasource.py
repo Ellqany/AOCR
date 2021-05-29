@@ -2,27 +2,24 @@ import os
 import random
 import logging
 import traceback
-from glob import glob
-from functools import partial
-from typing import Optional
 
+from functools import partial
 from . import Vectorizer
 
 
 LOG = logging.getLogger(__file__)
 
 
-def flat_directory_datasource(vectorizer: Vectorizer, glob_pattern: str, max_items: Optional[int] = None, is_training: bool = False):
-    images = glob(glob_pattern)
-    examples = [(os.path.basename(image_file).split('.')[0], image_file)
-                for image_file in images]
-    if max_items is not None:
-        random.shuffle(examples)
-        examples = examples[:max_items]
-    return partial(examples_generator, examples=examples, vectorizer=vectorizer, is_training=is_training)
-
-
 def csv_data_source(vectorizer: Vectorizer, directory: str, filename: str, is_training: bool = False, sep: str = ';'):
+    '''
+        convert the dataset to tensor ie (convert the image to tensor and the responding text in each image to tensor)
+            vectorizer: help in transforming the image and text to responed tensor
+            directory: the directory where the train, test or validation text file stored in
+            filename: the train, test or validation text file which the image path and the corresponding text are recodeing in with speprator
+            sep: the seprator char to split eachline with to get the image nad corresponding text
+            is_training: is the data for training or not
+    '''
+
     examples = []
     with open(os.path.join(directory, filename), 'r', encoding='utf-8') as fp:
         for line in fp.readlines():
@@ -37,6 +34,13 @@ def csv_data_source(vectorizer: Vectorizer, directory: str, filename: str, is_tr
 
 
 def examples_generator(examples: list, vectorizer: Vectorizer, is_training: bool):
+    '''
+        convert the dataset to tensor ie (convert the image to tensor and the responding text in each image to tensor)
+            examples: list containes the image pass and the corresponding text
+            vectorizer: help in transforming the image and text to responed tensor
+            is_training: is the data for training or not
+    '''
+
     random.shuffle(examples)
     for text, image_file in examples:
         try:
