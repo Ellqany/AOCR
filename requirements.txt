@@ -1,0 +1,8 @@
+tensorflow==2.4.1
+numpy==1.19.5
+opencv-python
+Pillow
+tqdm
+matplotlib
+imgaug
+imutils

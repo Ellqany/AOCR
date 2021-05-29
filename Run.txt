@@ -1,0 +1,6 @@
+Trian
+    python D:\Python\TF2\AOCR\run.py --epochs=1000 --batch_size=64 --image_width=250 --image_height=150 --max_txt_length=12 --learining_rate=0.001 --data_directory=Data --model_name=models/ocr.h5
+    python D:\Python\TF2\AOCR\run.py --epochs=30 --batch_size=128 --image_width=250 --max_txt_length=12 --data_directory=Data --model_name=models/ocr5.h5
+
+Convert2lite
+    python D:\Python\TF2\AOCR\convert2tflite.py --image_width=250 --max_txt_length=12 --image_height=150 --tf_model=tf/ocr.h5 --model_name=ocr.tflite --learining_rate=8e-3
