@@ -244,7 +244,7 @@ class AttentionOCR:
 
             if y_pred.shape[-1] > 1:
                 val_max = np.argmax(y_pred[0][0])
-                propapilities.append(y_pred[0][0][val_max])
+                propapilities.append(float(y_pred[0][0][val_max]))
 
         y_pred = np.squeeze(y_pred, axis=0)  # squeeze the batch index out
         texts.append(self._vocabulary.one_hot_decode(
