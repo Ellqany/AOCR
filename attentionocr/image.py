@@ -61,7 +61,7 @@ class ImageUtil:
         '''
             Convert image to gray scale
         '''
-
+        image = cv2.bilateralFilter(image, 9, 75, 75)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) / 255
         return image
 

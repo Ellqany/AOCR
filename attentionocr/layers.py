@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Bidirectional, Dropout, MaxPool2D, Conv2D, L
 
 
 class Encoder:
-
+    # encoder layers
     layers = [
         Conv2D(64, (3, 3), padding='same', activation='relu',
                kernel_initializer='he_uniform'),
@@ -64,6 +64,81 @@ class Encoder:
         return lstm
 
     @staticmethod
+    def get_layers(usevgg: bool):
+        if(usevgg):
+            return [
+                Conv2D(filters=64, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                Conv2D(filters=64, kernel_size=(3, 3),
+                       padding="same", activation="relu"),
+                BatchNormalization(),
+                MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
+
+                Conv2D(filters=128, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                Conv2D(filters=128, kernel_size=(3, 3),
+                       padding="same", activation="relu"),
+                MaxPool2D(pool_size=(2, 2), strides=(2, 2)),
+
+                Conv2D(filters=256, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                Conv2D(filters=256, kernel_size=(3, 3),
+                       padding="same", activation="relu"),
+                BatchNormalization(),
+                Conv2D(filters=256, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                MaxPool2D(pool_size=(2, 1), strides=(2, 1)),
+
+                Conv2D(filters=512, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                Conv2D(filters=512, kernel_size=(3, 3),
+                       padding="same", activation="relu"),
+                BatchNormalization(),
+                Conv2D(filters=512, kernel_size=(3, 3),
+                       padding='same', activation='relu'),
+                MaxPool2D(pool_size=(2, 1), strides=(2, 1)),
+
+                Conv2D(filters=512, kernel_size=(2, 2),
+                       padding='same', activation='relu'),
+                Conv2D(filters=512, kernel_size=(2, 2),
+                       padding='same', activation='relu'),
+                Conv2D(filters=512, kernel_size=(2, 2),
+                       padding='valid', activation='relu'),
+                BatchNormalization(),
+                Dropout(rate=0.5)
+            ]
+        else:
+            return [
+                Conv2D(64, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                BatchNormalization(),
+                MaxPool2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+
+                Conv2D(128, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                MaxPool2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+
+                Conv2D(256, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                BatchNormalization(),
+                Conv2D(256, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                MaxPool2D(pool_size=(2, 1), strides=(2, 1), padding='valid'),
+
+                Conv2D(512, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                BatchNormalization(),
+                Conv2D(512, (3, 3), padding='same', activation='relu',
+                       kernel_initializer='he_uniform'),
+                MaxPool2D(pool_size=(2, 1), strides=(2, 1), padding='valid'),
+
+                Conv2D(512, (2, 2), padding='valid', activation='relu',
+                       kernel_initializer='he_uniform'),
+                BatchNormalization(),
+                Dropout(rate=0.5)
+            ]
+
+    @staticmethod
     def get_width(width):
         '''
             get the width of the netowrk
@@ -109,8 +184,8 @@ class Decoder:
 
 
 class DecoderOutput:
-    def __init__(self, vocab_size):
-        self.hidden = Dense(256, activation='relu')
+    def __init__(self, units: int, vocab_size: int):
+        self.hidden = Dense(units, activation='relu')
         self.dense = Dense(vocab_size, activation='softmax')
 
     def __call__(self, decoder_output) -> tf.Tensor:

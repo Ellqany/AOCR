@@ -48,7 +48,7 @@ class AttentionOCR:
         self._encoder = Encoder(self._units)
         self._attention = Attention(self._units)
         self._decoder = Decoder(self._units)
-        self._output = DecoderOutput(len(self._vocabulary))
+        self._output = DecoderOutput(self._units, len(self._vocabulary))
 
         self._training_model = self.build_training_model()
         self._inference_model = self.build_inference_model()
@@ -205,6 +205,25 @@ class AttentionOCR:
         '''
         self._training_model.load_weights(filepath=filepath)
 
+    def load_models(self, filepath: str) -> None:
+        '''
+            load pretrainned model weight to all models
+                filepath: the path of the pretrained model
+        '''
+        self._training_model.load_weights(filepath=filepath)
+        self._inference_model.load_weights(filepath=filepath)
+        self._visualisation_model.load_weights(filepath=filepath)
+
+    def export2tflite(self, filepath: str):
+        # Conver to tflite
+        converter = tf.lite.TFLiteConverter.from_keras_model(self._inference_model)
+        tflite_model = converter.convert()
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        # Save the model.
+        with open(filepath, 'wb') as f:
+            f.write(tflite_model)
+
     def predict(self, images: list):
         '''
             Single image or multible images prediction
@@ -221,7 +240,7 @@ class AttentionOCR:
             decoder_input[0, :, :] = self._vocabulary.one_hot_encode(
                 '', 1, sos=True, eos=False)
 
-            y_pred = self._inference_model.predict([image, decoder_input])
+            y_pred = self._inference_model([image, decoder_input], training=False)
 
             if y_pred.shape[-1] > 1:
                 val_max = np.argmax(y_pred[0][0])
@@ -246,8 +265,8 @@ class AttentionOCR:
             decoder_input[0, :, :] = self._vocabulary.one_hot_encode(
                 '', 1, sos=True, eos=False)
 
-            y_pred, attention = self._visualisation_model.predict(
-                [input_image, decoder_input])
+
+            y_pred, attention = self._visualisation_model([input_image, decoder_input], training=False)
             y_pred = np.squeeze(y_pred, axis=0)
             text = self._vocabulary.one_hot_decode(
                 y_pred, self._max_txt_length)

@@ -8,7 +8,7 @@ from .vocabulary import Vocabulary
 
 class Vectorizer:
 
-    def __init__(self, vocabulary: Vocabulary, image_height=32, image_width=320, max_txt_length: int = 42, transform: str = "lowercase"):
+    def __init__(self, vocabulary: Vocabulary, image_height: int = 32, image_width: int = 320, max_txt_length: int = 42, transform: str = "lowercase"):
         '''
             A wrapper class for converting data into tensor
                 vocabulary: help inperforming one hot encoder
