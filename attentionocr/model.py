@@ -195,7 +195,9 @@ class AttentionOCR:
             save model while trainning and at the end of trainning
                 filepath: the path to store model in
         '''
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        model_dir = os.path.dirname(filepath)
+        if model_dir not in (None, ''):
+            os.makedirs(model_dir, exist_ok=True)
         self._training_model.save_weights(filepath=filepath)
 
     def load(self, filepath: str) -> None:
@@ -218,7 +220,9 @@ class AttentionOCR:
         # Conver to tflite
         converter = tf.lite.TFLiteConverter.from_keras_model(self._inference_model)
         tflite_model = converter.convert()
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        model_dir = os.path.dirname(filepath)
+        if model_dir not in (None, ''):
+            os.makedirs(model_dir, exist_ok=True)
 
         # Save the model.
         with open(filepath, 'wb') as f:

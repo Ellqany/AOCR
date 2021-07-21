@@ -69,7 +69,7 @@ def process_args(args, defaults):
 
     parser_tflite = subparsers.add_parser(
         'tflite', parents=[parser_model], help='export the model in tflite formate.')
-    parser_tflite.set_defaults(phase='export')
+    parser_tflite.set_defaults(phase='tflite')
     parser_tflite.add_argument("--tf_model", type=str, default=defaults.model_name, required=True,
                                help=('the complete model path, default=%s' % (defaults.model_name)))
     parser_tflite.add_argument('--model_name', type=str, default=defaults.tflite_model_name, required=True,
@@ -108,6 +108,7 @@ def main(args=None):
 
         model.export2tflite(parameters.model_name)
     else:
+        print('Phase: ' + parameters.phase)
         raise NotImplementedError
 
 

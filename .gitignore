@@ -20,5 +20,5 @@ dataset
 *.pyc
 /.vscode
 */__pycache__
+/__pycache__
 setup.py
-README.md

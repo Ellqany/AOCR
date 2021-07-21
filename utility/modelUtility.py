@@ -56,7 +56,8 @@ def test_attention_ocr(model: AttentionOCR, voc: Vocabulary, vec: Vectorizer, vi
     for image, _, decoder_output in test_data():
         txt = voc.one_hot_decode(decoder_output, 12)
         (pred, prop) = model.predict([image])
-        text = '{}: {:.2f}%'.format(pred[0], prop[0])
+        confidence = prop[0] * 100
+        text = '{}: {:.2f}%'.format(pred[0], confidence)
 
         if (pred[0] == txt):
             predictions.append(True)
